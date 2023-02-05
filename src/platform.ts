@@ -45,7 +45,7 @@ export class VoltalisPlatform implements DynamicPlatformPlugin {
   async voltalisLogin() {
     await this.voltalisClient.login();
 
-    let loginRefreshIntervalInMinutes =
+    const loginRefreshIntervalInMinutes =
       typeof this.config.loginRefreshIntervalInMinutes === "undefined"
         ? 10
         : this.config.loginRefreshIntervalInMinutes;
