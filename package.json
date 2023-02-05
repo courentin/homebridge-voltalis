@@ -1,16 +1,16 @@
 {
   "private": true,
-  "displayName": "Plugin Name",
-  "name": "homebridge-plugin-name",
+  "displayName": "Voltalis",
+  "name": "homebridge-voltalis",
   "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "description": "A plugin for controlling Voltalis equipments.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "https://github.com/courentin/homebridge-voltalis"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/courentin/homebridge-voltalis/issues"
   },
   "engines": {
     "node": ">=14.18.1",
@@ -26,7 +26,10 @@
   "keywords": [
     "homebridge-plugin"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "voltalis-client": "^0.0.4",
+    "rxjs": "^7.8.0"
+  },
   "devDependencies": {
     "@types/node": "^16.10.9",
     "@typescript-eslint/eslint-plugin": "^5.0.0",

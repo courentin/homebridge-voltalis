@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "Voltalis",
   "pluginType": "platform",
   "singular": true,
   "schema": {
@@ -10,6 +10,22 @@
         "type": "string",
         "required": true,
         "default": "Example Dynamic Platform"
+      },
+      "username": {
+        "title": "Voltalis username/email",
+        "type": "string",
+        "required": true
+      },
+      "password": {
+        "title": "Voltalis password",
+        "type": "string",
+        "required": true
+      },
+      "loginRefreshIntervalInMinutes": {
+        "title": "Frequency at which the the login to Voltalis API is reset",
+        "type": "number",
+        "required": true,
+        "default": 10
       }
     }
   }
