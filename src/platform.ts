@@ -9,8 +9,13 @@ import {
 } from "homebridge";
 
 import { PLATFORM_NAME, PLUGIN_NAME } from "./settings";
-import { ModulatorAccessory } from "./platformAccessory";
+import {
+  ModulatorAccessory,
+  Scheduler,
+  SchedulerAccessory,
+} from "./platformAccessory";
 import { Voltalis } from "voltalis-client";
+import { firstValueFrom } from "rxjs";
 
 export class VoltalisPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -38,6 +43,7 @@ export class VoltalisPlatform implements DynamicPlatformPlugin {
     // to start discovery of new accessories.
     this.api.on("didFinishLaunching", async () => {
       log.debug("Executed didFinishLaunching callback");
+      await this.voltalisLogin();
       this.discoverDevices();
     });
   }
@@ -52,6 +58,7 @@ export class VoltalisPlatform implements DynamicPlatformPlugin {
 
     setInterval(() => {
       this.voltalisClient.login();
+      this.log.debug("Login refresh");
     }, loginRefreshIntervalInMinutes * 60 * 1000);
   }
 
@@ -72,7 +79,6 @@ export class VoltalisPlatform implements DynamicPlatformPlugin {
    * must not be registered again to prevent "duplicate UUID" errors.
    */
   async discoverDevices() {
-    await this.voltalisClient.login();
     for (const modulator of this.voltalisClient.getModulators()) {
       const modulatorId = modulator.values["2"].csLinkId;
       const formattedModulator = {
@@ -90,17 +96,7 @@ export class VoltalisPlatform implements DynamicPlatformPlugin {
           "Restoring existing accessory from cache:",
           existingAccessory.displayName
         );
-
-        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
-        // existingAccessory.context.device = device;
-        // this.api.updatePlatformAccessories([existingAccessory]);
-
         new ModulatorAccessory(this, existingAccessory, this.voltalisClient);
-
-        // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-        // remove platform accessories when no longer present
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-        // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
       } else {
         this.log.info("Adding new accessory:", formattedModulator.name);
 
@@ -108,16 +104,44 @@ export class VoltalisPlatform implements DynamicPlatformPlugin {
           formattedModulator.name,
           formattedModulator.uuid
         );
-
-        // store a copy of the device object in the `accessory.context`
-        // the `context` property can be used to store any data about the accessory you may need
         accessory.context.modulator = formattedModulator;
-
-        // create the accessory handler for the newly create accessory
-        // this is imported from `platformAccessory.ts`
         new ModulatorAccessory(this, accessory, this.voltalisClient);
 
-        // link the accessory to your platform
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          accessory,
+        ]);
+      }
+    }
+    const schedulers = await firstValueFrom<Scheduler[]>(
+      this.voltalisClient.getSchedulerList()
+    );
+    for (const scheduler of schedulers) {
+      const formattedScheduler = {
+        id: scheduler.id,
+        name: scheduler.isException ? scheduler.name : `🔁 ${scheduler.name}`,
+        uuid: this.api.hap.uuid.generate(scheduler.id.toString()),
+      };
+
+      const existingAccessory = this.accessories.find(
+        (accessory) => accessory.UUID === formattedScheduler.uuid
+      );
+
+      if (existingAccessory) {
+        this.log.info(
+          "Restoring existing accessory from cache:",
+          existingAccessory.displayName
+        );
+        new SchedulerAccessory(this, existingAccessory, this.voltalisClient);
+      } else {
+        this.log.info("Adding new accessory:", formattedScheduler.name);
+
+        const accessory = new this.api.platformAccessory(
+          formattedScheduler.name,
+          formattedScheduler.uuid
+        );
+        accessory.context.scheduler = formattedScheduler;
+        new SchedulerAccessory(this, accessory, this.voltalisClient);
+
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
           accessory,
         ]);
